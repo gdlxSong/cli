@@ -52,6 +52,7 @@ func (d *daprProcess) List() ([]ListOutput, error) {
 func List() ([]ListOutput, error) {
 	list := []ListOutput{}
 
+	//通过ps命令来列举当前主机进程信息
 	processes, err := ps.Processes()
 	if err != nil {
 		return nil, err
@@ -63,6 +64,7 @@ func List() ([]ListOutput, error) {
 	// Populates the map if all data is available for the sidecar.
 	for _, proc := range processes {
 		executable := strings.ToLower(proc.Executable())
+		//通过daprd来过滤使用dapr(dapr-cli)启动的用户服务
 		if (executable == "daprd") || (executable == "daprd.exe") {
 			procDetails, err := process.NewProcess(int32(proc.Pid()))
 			if err != nil {

@@ -25,22 +25,22 @@ const sentryDefaultAddress = "localhost:50001"
 
 // RunConfig represents the application configuration parameters.
 type RunConfig struct {
-	AppID              string
-	AppPort            int
-	HTTPPort           int
-	GRPCPort           int
-	ConfigFile         string
-	Protocol           string
-	Arguments          []string
-	EnableProfiling    bool
-	ProfilePort        int
-	LogLevel           string
-	MaxConcurrency     int
-	PlacementHostAddr  string
-	ComponentsPath     string
-	AppSSL             bool
-	MetricsPort        int
-	MaxRequestBodySize int
+	AppID              string   //dapr-cli启动指定的APPID
+	AppPort            int      //即用户服务启动的端口
+	HTTPPort           int      //边车代理的HTTP端口
+	GRPCPort           int      //编程代理的GRPC端口
+	ConfigFile         string   //边车的配置文件：$HOME/.dapr/config.yaml
+	Protocol           string   //？
+	Arguments          []string //用户服务的cobra的参数
+	EnableProfiling    bool     //?
+	ProfilePort        int      //?
+	LogLevel           string   //边车日志级别
+	MaxConcurrency     int      //dapr-cli所起的服务的并发级别参数
+	PlacementHostAddr  string   //?
+	ComponentsPath     string   //dapr-cli启动服务的时候指定的components文件夹路径
+	AppSSL             bool     //是否启动https
+	MetricsPort        int      //metrics port
+	MaxRequestBodySize int      //http-request-body-size.
 }
 
 // RunOutput represents the run output.
@@ -188,11 +188,13 @@ func Run(config *RunConfig) (*RunOutput, error) {
 		appID = strings.ReplaceAll(sillyname.GenerateStupidName(), " ", "-")
 	}
 
+	//检查componnets目录是否存在
 	_, err := os.Stat(config.ComponentsPath)
 	if err != nil {
 		return nil, err
 	}
 
+	//通过ps命令来获取进程列表
 	dapr, err := List()
 	if err != nil {
 		return nil, err
@@ -204,12 +206,14 @@ func Run(config *RunConfig) (*RunOutput, error) {
 		}
 	}
 
+	//加载components...
 	componentsLoader := components.NewStandaloneComponents(modes.StandaloneConfig{ComponentsPath: config.ComponentsPath})
 	_, err = componentsLoader.LoadComponents()
 	if err != nil {
 		return nil, err
 	}
 
+	//通过daprd生成启动命令
 	daprCMD, daprHTTPPort, daprGRPCPort, metricsPort, err := getDaprCommand(appID, config.HTTPPort, config.GRPCPort, config.AppPort, config.ConfigFile, config.Protocol, config.EnableProfiling, config.ProfilePort, config.LogLevel, config.MaxConcurrency, config.PlacementHostAddr, config.ComponentsPath, config.AppSSL, config.MetricsPort, config.MaxRequestBodySize)
 	if err != nil {
 		return nil, err
